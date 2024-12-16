@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     redirectToMicrosoftLogin() {
-      const clientId = "YOUR_CLIENT_ID";
+      const clientId = "94ff5836-5336-48e6-909d-5b362d502baa";
       const tenant = "common"; // Supports both work and personal accounts
       const redirectUri = `${window.location.origin}/callback`;
       const scope = "Calendars.Read";
