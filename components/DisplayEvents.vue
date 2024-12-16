@@ -14,9 +14,10 @@
         <h2>Your Events:</h2>
         <ul>
           <li v-for="event in events" :key="event.id">
-            <strong>{{ event.subject }}</strong
-            ><br />
-            Start: {{ event.start.dateTime }}<br />
+            <strong>{{ event.subject }}</strong>
+            <br />
+            Start: {{ event.start.dateTime }}
+            <br />
             End: {{ event.end.dateTime }}
           </li>
         </ul>
@@ -27,10 +28,8 @@
 
 <script>
 import axios from "axios";
-import { fetchOutlookEvents } from "@/utils/outlook";
 
 export default {
-  name: "DisplayEvents",
   data() {
     return {
       events: [],
@@ -38,30 +37,37 @@ export default {
   },
   methods: {
     redirectToMicrosoftLogin() {
-      const clientId = "1c0e40a8-4c6d-458e-9ed6-2167e7f2f47e";
-      const redirectUri = window.location.origin + "/callback";
+      const clientId = "YOUR_CLIENT_ID";
+      const tenant = "common"; // Supports both work and personal accounts
+      const redirectUri = `${window.location.origin}/callback`;
       const scope = "Calendars.Read";
-      const state = "random_state"; // Optional but recommended for security
-
-      // const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
-      const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`;
+      const state = "random_state";
+      const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
       window.location.href = authUrl;
     },
-    async fetchEvents(accessToken) {
+    async fetchEvents() {
+      const accessToken = localStorage.getItem("outlookAccessToken");
+
+      if (!accessToken) {
+        console.error("No access token found");
+        return;
+      }
+
       try {
-        this.events = await fetchOutlookEvents(accessToken);
+        const response = await axios.get("https://graph.microsoft.com/v1.0/me/events", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        this.events = response.data.value;
+        console.log("Events fetched successfully:", this.events);
       } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error("Error fetching events:", error.response || error.message);
       }
     },
   },
   mounted() {
-    const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = hashParams.get("access_token");
-
-    if (accessToken) {
-      this.fetchEvents(accessToken);
-    }
+    this.fetchEvents();
   },
 };
 </script>
